@@ -1,0 +1,8 @@
+fastapi
+redis
+types-redis
+uvicorn
+numpy
+scipy
+opencv-python
+pillow
