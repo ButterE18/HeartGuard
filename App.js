@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -14,7 +13,8 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { styles } from './styles';
 
-// Camera import (wrapped for debug safety)
+
+// ================= CAMERA IMPORT =================
 let CameraComponent = null;
 try {
   const cameraModule = require('expo-camera');
@@ -24,12 +24,12 @@ try {
   console.error("Camera module failed to load:", err);
 }
 
-// API import safety
+
+// ================= API IMPORT =================
 let analyzeECGImage = async () => {
   console.warn("Using fallback analysis");
   return { heart_rate: 70, conditions: ["Fallback"], summary: "No API connected" };
 };
-
 
 try {
   const api = require('./api');
@@ -39,22 +39,22 @@ try {
   console.error("API failed to load:", err);
 }
 
+
+// ================= APP =================
 export default function App() {
   const [images, setImages] = useState([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [currentTab, setCurrentTab] = useState('Home'); // ✅ FIXED
 
 
   // ================= LOAD IMAGES =================
   useEffect(() => {
     const loadImages = async () => {
       try {
-        console.log("Loading images...");
         const savedImages = await AsyncStorage.getItem('heartguard_images');
-
 
         if (savedImages) {
           setImages(JSON.parse(savedImages));
-          console.log("Images loaded");
         }
       } catch (error) {
         console.error('Failed to load images:', error);
@@ -62,6 +62,7 @@ export default function App() {
         setIsLoaded(true);
       }
     };
+
     loadImages();
   }, []);
 
@@ -71,18 +72,21 @@ export default function App() {
     if (isLoaded) {
       const saveImages = async () => {
         try {
-          console.log("Saving images...");
-          await AsyncStorage.setItem('heartguard_images', JSON.stringify(images));
+          await AsyncStorage.setItem(
+            'heartguard_images',
+            JSON.stringify(images)
+          );
         } catch (error) {
           console.error('Failed to save images:', error);
         }
       };
+
       saveImages();
     }
   }, [images, isLoaded]);
 
 
-  // ================= LOADING STATE =================
+  // ================= LOADING =================
   if (!isLoaded) {
     return (
       <SafeAreaView style={styles.container}>
@@ -91,31 +95,20 @@ export default function App() {
     );
   }
 
-  return (
-    <View style={{ flex: 1 }}>
-        <Text>
-          App loaded - navigate to Home
-        </Text>
-        <HomeScreen navigation={{ navigate: () => console.log("Navigate called") }} images={images} />
 
-      </View>
-      
-  );
-// ================= MAIN NAV =================
+  // ================= MAIN NAV =================
   return (
     <View style={{ flex: 1 }}>
-      {/* Screen Content /}
+
+      {/* Screen Content */}
       <View style={{ flex: 1 }}>
         {currentTab === 'Home' && (
-          <HomeScreen
-            navigation={{ navigate: setCurrentTab }}
-            images={images}
-          />
+          <HomeScreen navigation={{ setTab: setCurrentTab }} images={images} />
         )}
 
         {currentTab === 'Camera' && (
           <CameraScreen
-            navigation={{ navigate: setCurrentTab }}
+            navigation={{ setTab: setCurrentTab }}
             images={images}
             setImages={setImages}
           />
@@ -123,73 +116,81 @@ export default function App() {
 
         {currentTab === 'Gallery' && (
           <GalleryScreen
-            navigation={{ navigate: setCurrentTab }}
+            navigation={{ setTab: setCurrentTab }}
             images={images}
           />
         )}
       </View>
 
-      {/ Tab Bar */}
+
+      {/* Tab Bar */}
       <View style={styles.tabBar}>
-        <TouchableOpacity onPress={() => setCurrentTab('Home')} style={styles.tab}>
+        <TouchableOpacity
+          onPress={() => setCurrentTab('Home')}
+          style={styles.tab}
+        >
           <Text style={styles.tabText}>Home</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setCurrentTab('Camera')} style={styles.tab}>
+        <TouchableOpacity
+          onPress={() => setCurrentTab('Camera')}
+          style={styles.tab}
+        >
           <Text style={styles.tabText}>Camera</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => setCurrentTab('Gallery')} style={styles.tab}>
+        <TouchableOpacity
+          onPress={() => setCurrentTab('Gallery')}
+          style={styles.tab}
+        >
           <Text style={styles.tabText}>Gallery</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
-} 
+}
 
 
 // ================= HOME =================
-
-
 function HomeScreen({ navigation, images }) {
   return (
-
     <SafeAreaView style={styles.container}>
       <Text style={styles.title}>HeartGuard</Text>
       <Text style={styles.subtitle}>
         Scan ECG images and get instant analysis
       </Text>
 
-
       <Text style={styles.stat}>Scans: {images.length}</Text>
 
+      <Button
+        title="Open Camera"
+        onPress={() => navigation.setTab('Camera')}
+      />
 
-      <Button title="Open Camera" onPress={() => navigation.navigate('Camera')} />
-      <Button title="View Gallery" onPress={() => navigation.navigate('Gallery')} />
+      <Button
+        title="View Gallery"
+        onPress={() => navigation.setTab('Gallery')}
+      />
     </SafeAreaView>
   );
 }
 
 
 // ================= CAMERA =================
-
-
 function CameraScreen({ navigation, images, setImages }) {
   const [hasPermission, setHasPermission] = useState(null);
   const [capturedPhoto, setCapturedPhoto] = useState(null);
   const [isPreview, setIsPreview] = useState(false);
   const [loading, setLoading] = useState(false);
 
-
   const cameraRef = useRef(null);
 
 
-  // WEB BLOCK (prevents crash)
+  // ================= WEB BLOCK =================
   if (Platform.OS === 'web') {
-    console.warn("Camera not supported on web");
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Camera not supported on web. Use mobile device.</Text>
+        <Text>Camera not supported on web.</Text>
       </View>
     );
   }
@@ -199,17 +200,14 @@ function CameraScreen({ navigation, images, setImages }) {
   useEffect(() => {
     (async () => {
       try {
-        if (!CameraComponent) {
-          console.error("CameraComponent is null");
-          return;
-        }
+        if (!CameraComponent) return;
 
+        const { status } =
+          await CameraComponent.requestCameraPermissionsAsync();
 
-        const { status } = await CameraComponent.requestCameraPermissionsAsync();
-        console.log("Camera permission:", status);
         setHasPermission(status === 'granted');
       } catch (err) {
-        console.error("Permission error:", err);
+        console.error(err);
       }
     })();
   }, []);
@@ -218,80 +216,60 @@ function CameraScreen({ navigation, images, setImages }) {
   // ================= TAKE PHOTO =================
   const takePicture = async () => {
     try {
-      if (!cameraRef.current) {
-        console.error("Camera ref is null");
-        return;
-      }
-
-
       const photo = await cameraRef.current.takePictureAsync();
-      console.log("Photo captured:", photo);
-
-
       setCapturedPhoto(photo);
       setIsPreview(true);
     } catch (err) {
-      console.error("Capture failed:", err);
+      console.error(err);
     }
   };
 
 
   // ================= SAVE PHOTO =================
   const savePhoto = async () => {
-    if (!capturedPhoto) return;
-
-
     setLoading(true);
 
-
     try {
-      console.log("Sending to API...");
       const analysis = await analyzeECGImage(capturedPhoto.uri);
-      console.log("Analysis result:", analysis);
-
 
       const newItem = {
         uri: capturedPhoto.uri,
         analysis: {
           bpm: analysis.heart_rate || 0,
           diagnosis: analysis.conditions
-            ? analysis.conditions.join(", ")
-            : "Unknown",
+            ? analysis.conditions.join(', ')
+            : 'Unknown',
           rhythm:
             analysis.conditions &&
-            analysis.conditions.includes("Irregular Rhythm")
-              ? "Irregular"
-              : "Regular",
-          interpretation: analysis.summary || "Analysis completed",
+            analysis.conditions.includes('Irregular Rhythm')
+              ? 'Irregular'
+              : 'Regular',
+          interpretation: analysis.summary || 'Analysis completed',
           timestamp: new Date().toLocaleString(),
         },
       };
 
-
       setImages([newItem, ...images]);
-
 
       setCapturedPhoto(null);
       setIsPreview(false);
 
-
-      navigation.navigate('Gallery');
-    } catch (error) {
-      console.error("Save photo error:", error);
-      alert("Failed to analyze photo.");
+      navigation.setTab('Gallery');
+    } catch (err) {
+      console.error(err);
+      alert('Analysis failed');
     } finally {
       setLoading(false);
     }
   };
 
 
-  // ================= PERMISSION STATES =================
+  // ================= STATES =================
   if (hasPermission === null)
-    return <Text style={{ textAlign: 'center' }}>Requesting permission...</Text>;
-
+    return <Text>Requesting permission...</Text>;
 
   if (hasPermission === false)
-    return <Text style={{ textAlign: 'center' }}>No camera access</Text>;
+    return <Text>No camera access</Text>;
 
 
   // ================= UI =================
@@ -305,18 +283,13 @@ function CameraScreen({ navigation, images, setImages }) {
             <Text>Camera failed to load</Text>
           )}
 
-
           <Button title="Capture" onPress={takePicture} />
         </>
       ) : (
         <View style={{ flex: 1 }}>
           <Image source={{ uri: capturedPhoto.uri }} style={{ height: 300 }} />
 
-
-          {loading && (
-            <Text style={{ textAlign: 'center' }}>Analyzing...</Text>
-          )}
-
+          {loading && <Text>Analyzing...</Text>}
 
           <Button title="Retake" onPress={() => setIsPreview(false)} />
           <Button title="Save & Analyze" onPress={savePhoto} />
@@ -328,11 +301,8 @@ function CameraScreen({ navigation, images, setImages }) {
 
 
 // ================= GALLERY =================
-
-
-function GalleryScreen({ images }) {
+function GalleryScreen({ navigation, images }) {
   const [selected, setSelected] = useState(null);
-
 
   return (
     <SafeAreaView style={styles.container}>
@@ -351,27 +321,21 @@ function GalleryScreen({ images }) {
         )}
       />
 
-
       <Modal visible={!!selected} transparent>
         <View style={styles.modal}>
           {selected && (
             <View style={styles.modalContent}>
-              <Image source={{ uri: selected.uri }} style={styles.modalImage} />
-
+              <Image
+                source={{ uri: selected.uri }}
+                style={styles.modalImage}
+              />
 
               <Text style={styles.modalTitle}>ECG Result</Text>
 
-
-              <Text>Heart Rate: {selected.analysis.bpm} BPM</Text>
+              <Text>Heart Rate: {selected.analysis.bpm}</Text>
               <Text>Diagnosis: {selected.analysis.diagnosis}</Text>
               <Text>Rhythm: {selected.analysis.rhythm}</Text>
               <Text>{selected.analysis.interpretation}</Text>
-
-
-              <Text style={{ marginTop: 10, fontStyle: 'italic' }}>
-                Not medical advice
-              </Text>
-
 
               <Button title="Close" onPress={() => setSelected(null)} />
             </View>
@@ -381,4 +345,3 @@ function GalleryScreen({ images }) {
     </SafeAreaView>
   );
 }
-
