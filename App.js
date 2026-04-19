@@ -11,16 +11,8 @@ import {
   SafeAreaView,
   Modal,
 } from 'react-native';
-
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
-
-
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { styles } from './styles';
 
 // Camera import (wrapped for debug safety)
 let CameraComponent = null;
@@ -31,10 +23,6 @@ try {
 } catch (err) {
   console.error("Camera module failed to load:", err);
 }
-
-
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 // API import safety
 let analyzeECGImage = async () => {
@@ -50,13 +38,6 @@ try {
 } catch (err) {
   console.error("API failed to load:", err);
 }
-
-
-import { styles } from './styles';
-
-
-const Stack = createNativeStackNavigator();
-
 
 export default function App() {
   const [images, setImages] = useState([]);
@@ -120,28 +101,54 @@ export default function App() {
       </View>
       
   );
-    // ================= MAIN NAV =================
+// ================= MAIN NAV =================
   return (
-   <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerTitleAlign: 'center' }}>
-        <Stack.Screen name="Home">
-          {(props) => <HomeScreen {...props} images={images} />}
-        </Stack.Screen>
-        <Stack.Screen name="Camera">
-          {(props) => (
-            <CameraScreen {...props} images={images} setImages={setImages} />
-          )}
-        </Stack.Screen>
-        <Stack.Screen name="Gallery">
-          {(props) => <GalleryScreen {...props} images={images} />}
-        </Stack.Screen>
-      </Stack.Navigator>
-    </NavigationContainer>
-  ); 
+    <View style={{ flex: 1 }}>
+      {/* Screen Content /}
+      <View style={{ flex: 1 }}>
+        {currentTab === 'Home' && (
+          <HomeScreen
+            navigation={{ navigate: setCurrentTab }}
+            images={images}
+          />
+        )}
+
+        {currentTab === 'Camera' && (
+          <CameraScreen
+            navigation={{ navigate: setCurrentTab }}
+            images={images}
+            setImages={setImages}
+          />
+        )}
+
+        {currentTab === 'Gallery' && (
+          <GalleryScreen
+            navigation={{ navigate: setCurrentTab }}
+            images={images}
+          />
+        )}
+      </View>
+
+      {/ Tab Bar */}
+      <View style={styles.tabBar}>
+        <TouchableOpacity onPress={() => setCurrentTab('Home')} style={styles.tab}>
+          <Text style={styles.tabText}>Home</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setCurrentTab('Camera')} style={styles.tab}>
+          <Text style={styles.tabText}>Camera</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => setCurrentTab('Gallery')} style={styles.tab}>
+          <Text style={styles.tabText}>Gallery</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 } 
 
 
-/* ================= HOME ================= */
+// ================= HOME =================
 
 
 function HomeScreen({ navigation, images }) {
@@ -164,7 +171,7 @@ function HomeScreen({ navigation, images }) {
 }
 
 
-/* ================= CAMERA ================= */
+// ================= CAMERA =================
 
 
 function CameraScreen({ navigation, images, setImages }) {
@@ -320,7 +327,7 @@ function CameraScreen({ navigation, images, setImages }) {
 }
 
 
-/* ================= GALLERY ================= */
+// ================= GALLERY =================
 
 
 function GalleryScreen({ images }) {
