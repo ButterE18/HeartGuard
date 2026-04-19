@@ -4,7 +4,7 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#F5F7FA', // soft clinical gray-blue background
+    backgroundColor: '#809fce', // soft clinical gray-blue background
   },
 
   title: {
