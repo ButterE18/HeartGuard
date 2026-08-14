@@ -1,0 +1,27 @@
+
+# HeartGuard Backend Requirements
+
+
+# FastAPI Framework
+fastapi>=0.115.0
+
+# ASGI Server
+uvicorn[standard]>=0.30.0
+
+# File Upload Support
+python-multipart>=0.0.9
+
+# Numerical Computing
+numpy>=1.26.0
+
+# Signal Processing
+scipy>=1.13.0
+
+# Computer Vision
+opencv-python>=4.10.0
+
+# Image Processing
+pillow>=10.4.0
+
+# FastAPI Dependency Validation
+pydantic>=2.8.0
