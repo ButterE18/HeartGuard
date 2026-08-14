@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "HeartGuard",
+    "slug": "heartguard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      "expo-asset",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow HeartGuard to use the camera to photograph an ECG strip for prototype analysis."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow HeartGuard to select an ECG image from your photo library for prototype analysis."
+        }
+      ]
+    ]
+  }
+}
